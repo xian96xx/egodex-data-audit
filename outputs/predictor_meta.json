@@ -1,0 +1,57 @@
+{
+  "task": "predict next 30 frames (1 s) of 12 keypoints from the past 30 frames, camera frame at current time",
+  "samples": {
+    "all": 65347,
+    "train": 46525,
+    "val": 6898,
+    "test": 11924,
+    "test_clean_half": 5962
+  },
+  "episodes": {
+    "train": 2058,
+    "val": 294,
+    "test": 588
+  },
+  "stride_frames": 10,
+  "model": "MLP 1116-512-512-1080, GELU, dropout 0.1, AdamW, MSE in cm, early stop on validation",
+  "training": {
+    "epochs_max": 30,
+    "batch": 512,
+    "lr": 0.001,
+    "patience": 4,
+    "seeds": [
+      0,
+      1,
+      2
+    ],
+    "split_seed": 20261117
+  },
+  "quality_score": "rank-average of window confidence (higher better), wrist jitter, max wrist step, frozen frames",
+  "defects": "per corrupted sample, one hand: jitter 10 mm sigma; spike 10 cm for 2 frames; 15-frame freeze; left/right swap from a random frame; linear drift reaching 10 cm over the 2-s span. 'mixed' picks one of the five at random.",
+  "rule_filter_thresholds": {
+    "jitter_mm": 2.064,
+    "max_step_mm": 33.888,
+    "freeze_run": 1.0,
+    "swap_mm": 16.862
+  },
+  "spearman_quality_vs_speed": -0.827,
+  "test_speed_tertile_cuts_mps": [
+    0.0322,
+    0.0933
+  ],
+  "baselines_test": {
+    "zero_velocity": {
+      "avg_mm": 42.23,
+      "final_mm": 65.3,
+      "clean_avg_mm": 22.34,
+      "clean_final_mm": 35.1
+    },
+    "constant_velocity": {
+      "avg_mm": 77.78,
+      "final_mm": 149.43,
+      "clean_avg_mm": 40.12,
+      "clean_final_mm": 77.41
+    }
+  },
+  "note": "Split of the EgoDex test set by episode; not comparable with the paper's benchmark numbers."
+}

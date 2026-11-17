@@ -1,0 +1,69 @@
+{
+  "n_episodes": 3243,
+  "n_tasks": 111,
+  "total_hours": 7.65,
+  "episode_seconds": {
+    "min": 0.5,
+    "p10": 2.0,
+    "median": 5.4,
+    "p90": 16.2,
+    "max": 174.6
+  },
+  "episodes_per_task": {
+    "min": 1,
+    "median": 20.0,
+    "max": 277
+  },
+  "transform_key_counts": {
+    "69": 3243
+  },
+  "confidence_key_counts": {
+    "0": 454,
+    "68": 2789
+  },
+  "episodes_with_confidences": 2789,
+  "episodes_without_confidences": 454,
+  "all_shapes_ok": true,
+  "transform_dtypes": {
+    "float32": 3243
+  },
+  "missing_hand_joints": {},
+  "attr_keys": {
+    "annotated": 3243,
+    "annotator_version": 3243,
+    "environment": 3243,
+    "extra": 3243,
+    "llm_description": 3243,
+    "llm_description2": 3243,
+    "llm_objects": 3243,
+    "llm_type": 3243,
+    "llm_verbs": 3243,
+    "object": 3243,
+    "session_name": 3243,
+    "task": 3243,
+    "which_llm_description": 2240,
+    "description": 1055,
+    "description2": 494,
+    "type": 1034,
+    "action": 23,
+    "ordering": 17,
+    "Type": 15,
+    "trim": 15,
+    "description1": 28
+  },
+  "episodes_with_description": 3243,
+  "episodes_with_second_description": 3243,
+  "which_description_values": {
+    "1": 1220,
+    "2": 1020,
+    "None": 1003
+  },
+  "mp4_paired": 3243,
+  "unit_check": {
+    "median_hand_bone_mm_on_sample": 30.2,
+    "median_wrist_distance_from_origin_m_on_sample": 1.0,
+    "sampled_episodes": 130
+  },
+  "expected_joints_plus_camera": 69,
+  "read_errors": 0
+}

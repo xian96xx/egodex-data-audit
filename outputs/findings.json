@@ -1,0 +1,61 @@
+{
+  "duplicate_frames": {
+    "whole_frame_duplicates": 2366,
+    "hand_frozen_camera_moving": 0,
+    "episodes_with_duplicates": 2366,
+    "frames_total": 826253,
+    "whole_frame_duplicates_pct_of_frames": 0.286,
+    "run_lengths": {
+      "1": 2366
+    },
+    "where": {
+      "first_10_frames": 2353,
+      "middle": 12,
+      "last_10_frames": 1
+    }
+  },
+  "wrist_conf0_vs_view": {
+    "left": {
+      "conf0_in_view": 4133,
+      "conf0_out_of_view": 50489,
+      "conf_pos_in_view": 544415,
+      "conf_pos_out_of_view": 152354,
+      "frames": 751391,
+      "conf0_share_of_frames_pct": 7.27,
+      "conf0_frames_out_of_view_pct": 92.4,
+      "in_view_frames_with_conf0_pct": 0.75
+    },
+    "right": {
+      "conf0_in_view": 1435,
+      "conf0_out_of_view": 7411,
+      "conf_pos_in_view": 569791,
+      "conf_pos_out_of_view": 172754,
+      "frames": 751391,
+      "conf0_share_of_frames_pct": 1.18,
+      "conf0_frames_out_of_view_pct": 83.8,
+      "in_view_frames_with_conf0_pct": 0.25
+    }
+  },
+  "median_wrist_speed_mps": {
+    "left": {
+      "when_conf0": 0.008,
+      "when_conf_pos": 0.003
+    },
+    "right": {
+      "when_conf0": 0.01,
+      "when_conf_pos": 0.029
+    }
+  },
+  "wrist_conf_median_when_detected": {
+    "in_view": 0.989,
+    "out_of_view": 0.988
+  },
+  "language_metadata": {
+    "desc2_nonempty": 3243,
+    "desc2_nonempty__which_present": 2240,
+    "which_value_2": 1020,
+    "which_value_1": 1220,
+    "desc2_nonempty__which_missing": 1003
+  },
+  "projection": "OpenCV pinhole with the official intrinsics, after inv(camera extrinsic), as in visualize_2d.py"
+}

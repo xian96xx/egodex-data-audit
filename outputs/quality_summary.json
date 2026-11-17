@@ -1,0 +1,122 @@
+{
+  "n_episodes": 3243,
+  "n_windows": 12436,
+  "read_errors": 0,
+  "parameters": {
+    "jump_m_per_frame": 0.1,
+    "camera_jump_m_per_frame": 0.1,
+    "freeze_eps_m": 1e-06,
+    "low_conf": 0.5,
+    "savgol_window": 9,
+    "savgol_poly": 2,
+    "window_frames": 60
+  },
+  "episode_flags_pct_of_all_episodes": {
+    "no_confidences": 14.0,
+    "nan_positions": 0.0,
+    "wrist_jump_gt_10cm_per_frame": 0.31,
+    "frozen_hand_ge_5_frames": 0.0,
+    "camera_jump_gt_10cm_per_frame": 0.03,
+    "wrist_jitter_gt_2mm": 4.32,
+    "wrist_jitter_gt_5mm": 0.12
+  },
+  "episode_flags_pct_of_episodes_with_confidences": {
+    "wrist_conf0_gt_10pct_frames": 13.77,
+    "wrist_conf0_any_frame": 16.85,
+    "hand_lowconf_gt_10pct_frames": 76.16
+  },
+  "distributions": {
+    "left_jitter_mm": {
+      "p10": 0.0303,
+      "p50": 0.2276,
+      "p90": 1.0637,
+      "p99": 2.4752
+    },
+    "right_jitter_mm": {
+      "p10": 0.1151,
+      "p50": 0.6672,
+      "p90": 1.374,
+      "p99": 2.584
+    },
+    "left_tip_jitter_mm": {
+      "p10": 0.0949,
+      "p50": 0.9636,
+      "p90": 2.7912,
+      "p99": 4.9487
+    },
+    "right_tip_jitter_mm": {
+      "p10": 0.8479,
+      "p50": 1.9774,
+      "p90": 3.5175,
+      "p99": 5.4548
+    },
+    "left_max_speed_mps": {
+      "p10": 0.0067,
+      "p50": 0.1718,
+      "p90": 0.7679,
+      "p99": 2.0112
+    },
+    "right_max_speed_mps": {
+      "p10": 0.0706,
+      "p50": 0.4919,
+      "p90": 0.9663,
+      "p99": 1.9377
+    },
+    "left_conf_mean": {
+      "p10": 0.2146,
+      "p50": 0.539,
+      "p90": 0.6589,
+      "p99": 0.7599
+    },
+    "right_conf_mean": {
+      "p10": 0.4555,
+      "p50": 0.5528,
+      "p90": 0.6336,
+      "p99": 0.7004
+    },
+    "left_conf0_ratio": {
+      "p10": 0.0,
+      "p50": 0.0,
+      "p90": 0.2814,
+      "p99": 1.0
+    },
+    "right_conf0_ratio": {
+      "p10": 0.0,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 1.0
+    },
+    "left_bone_cv_median": {
+      "p10": 0.0,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    "right_bone_cv_median": {
+      "p10": 0.0,
+      "p50": 0.0,
+      "p90": 0.0,
+      "p99": 0.0
+    },
+    "cam_max_speed_mps": {
+      "p10": 0.0175,
+      "p50": 0.0426,
+      "p90": 0.1291,
+      "p99": 0.3031
+    }
+  },
+  "frozen_frames_total": {
+    "left": 2366,
+    "right": 2366
+  },
+  "frozen_frames_with_wrist_conf0": {
+    "left": 198,
+    "right": 41
+  },
+  "window_detector_p95": {
+    "jitter_mm": 2.064,
+    "max_step_mm": 33.888,
+    "freeze_run": 1.0,
+    "swap_mm": 16.862
+  }
+}

@@ -1,0 +1,8 @@
+# EgoDex data is CC BY-NC-ND: never commit raw, extracted or derived data
+data/
+*.zip
+*.hdf5
+*.mp4
+*.npz
+__pycache__/
+*.pyc

@@ -1,0 +1,7 @@
+numpy
+h5py
+pandas
+scipy
+matplotlib
+torch
+opencv-python  # only for the review page: converts the videos to WebM

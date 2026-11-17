@@ -1,0 +1,49 @@
+{
+  "thresholds_p95_of_real_windows": {
+    "jitter_mm": 2.064,
+    "max_step_mm": 33.888,
+    "freeze_run": 1.0,
+    "swap_mm": 16.862
+  },
+  "real_window_alarm_rate": {
+    "jitter_mm": 0.05,
+    "max_step_mm": 0.05,
+    "freeze_run": 0.0,
+    "swap_mm": 0.05
+  },
+  "real_window_alarm_rate_any_detector": 0.0987,
+  "n_real_windows": 12436,
+  "clean_pool": {
+    "hand_conf_mean_min_median_of_windows": 0.5457,
+    "jitter_mm_max_p75": 1.059,
+    "pool_size": 3334
+  },
+  "n_clean_windows_injected": 400,
+  "inject_settings": {
+    "jitter": [
+      2,
+      5,
+      10
+    ],
+    "spike": [
+      30,
+      100,
+      300
+    ],
+    "freeze": [
+      5,
+      15,
+      30
+    ],
+    "swap": [
+      0
+    ],
+    "drift": [
+      20,
+      50,
+      100
+    ]
+  },
+  "seed": 20261117,
+  "note": "Synthetic defects only. Detection rates are sensitivity to injected defects, not real error rates."
+}
