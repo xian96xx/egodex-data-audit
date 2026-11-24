@@ -1,0 +1,437 @@
+{
+ "what": "VLM description checker on EPIC-KITCHENS-100 validation clips, judged against EPIC's human labels",
+ "data": {
+  "source": "EPIC-KITCHENS-100 validation split (Damen et al., IJCV 2022), CC BY-NC 4.0; only short clips of the sampled segments were fetched, none are published",
+  "segments": 160,
+  "videos": 38,
+  "participants": 15,
+  "per_verb": {
+   "insert": 20,
+   "open": 20,
+   "take": 20,
+   "close": 20,
+   "put": 20,
+   "remove": 20,
+   "turn-off": 20,
+   "turn-on": 20
+  },
+  "selection": "src/epic_make_sample.py, seed 7: 1-6 s, no overlap with the opposite verb on the same noun, noun present in the narration and not a pronoun object, turn-on/off on appliances only, at most 2 per video and verb"
+ },
+ "setup": {
+  "model": "gemma4:12b-it-q4_K_M",
+  "prompt": "calibrated-ce5ad3a7",
+  "frames": 16,
+  "width": 640,
+  "descriptions": "true = verb + noun from the label; swapped = opposite verb + same noun; other = another sampled segment's verb + noun (different pair, noun class, video)",
+  "judgments": 480,
+  "mean_seconds_per_judgment": 1.91
+ },
+ "groups": [
+  {
+   "group": "true",
+   "expected": "match",
+   "n_match": 118,
+   "n_mismatch": 42,
+   "n_unsure": 0,
+   "mismatch": {
+    "n": 160,
+    "k": 42,
+    "rate": 0.2625,
+    "ci95": [
+     0.2005,
+     0.3357
+    ]
+   },
+   "n_unparsed": 0,
+   "mismatch_error_types": {
+    "action": 38,
+    "direction": 3,
+    "object": 1
+   }
+  },
+  {
+   "group": "swapped",
+   "expected": "mismatch",
+   "n_match": 108,
+   "n_mismatch": 52,
+   "n_unsure": 0,
+   "mismatch": {
+    "n": 160,
+    "k": 52,
+    "rate": 0.325,
+    "ci95": [
+     0.2573,
+     0.4009
+    ]
+   },
+   "n_unparsed": 0,
+   "mismatch_error_types": {
+    "action": 43,
+    "object": 4,
+    "direction": 4,
+    "extra_step": 1
+   },
+   "mismatch_with_expected_type": 4,
+   "true_match_and_this_mismatch": 17
+  },
+  {
+   "group": "other",
+   "expected": "mismatch",
+   "n_match": 27,
+   "n_mismatch": 131,
+   "n_unsure": 2,
+   "mismatch": {
+    "n": 160,
+    "k": 131,
+    "rate": 0.8187,
+    "ci95": [
+     0.7518,
+     0.8707
+    ]
+   },
+   "n_unparsed": 0,
+   "mismatch_error_types": {
+    "action": 92,
+    "object": 39
+   },
+   "mismatch_with_expected_type": 131,
+   "true_match_and_this_mismatch": 94
+  }
+ ],
+ "by_pair": [
+  {
+   "pair": "take/put",
+   "segments": 40,
+   "true_mismatch": {
+    "n": 40,
+    "k": 9,
+    "rate": 0.225,
+    "ci95": [
+     0.1232,
+     0.375
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 40,
+    "k": 14,
+    "rate": 0.35,
+    "ci95": [
+     0.2213,
+     0.5049
+    ]
+   },
+   "other_mismatch": {
+    "n": 40,
+    "k": 35,
+    "rate": 0.875,
+    "ci95": [
+     0.7389,
+     0.9454
+    ]
+   }
+  },
+  {
+   "pair": "open/close",
+   "segments": 40,
+   "true_mismatch": {
+    "n": 40,
+    "k": 10,
+    "rate": 0.25,
+    "ci95": [
+     0.1419,
+     0.4019
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 40,
+    "k": 11,
+    "rate": 0.275,
+    "ci95": [
+     0.1611,
+     0.4284
+    ]
+   },
+   "other_mismatch": {
+    "n": 40,
+    "k": 31,
+    "rate": 0.775,
+    "ci95": [
+     0.625,
+     0.8768
+    ]
+   }
+  },
+  {
+   "pair": "insert/remove",
+   "segments": 40,
+   "true_mismatch": {
+    "n": 40,
+    "k": 7,
+    "rate": 0.175,
+    "ci95": [
+     0.0875,
+     0.3195
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 40,
+    "k": 12,
+    "rate": 0.3,
+    "ci95": [
+     0.1807,
+     0.4543
+    ]
+   },
+   "other_mismatch": {
+    "n": 40,
+    "k": 33,
+    "rate": 0.825,
+    "ci95": [
+     0.6805,
+     0.9125
+    ]
+   }
+  },
+  {
+   "pair": "turn-on/turn-off",
+   "segments": 40,
+   "true_mismatch": {
+    "n": 40,
+    "k": 16,
+    "rate": 0.4,
+    "ci95": [
+     0.2635,
+     0.554
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 40,
+    "k": 15,
+    "rate": 0.375,
+    "ci95": [
+     0.2422,
+     0.5297
+    ]
+   },
+   "other_mismatch": {
+    "n": 40,
+    "k": 32,
+    "rate": 0.8,
+    "ci95": [
+     0.6524,
+     0.895
+    ]
+   }
+  }
+ ],
+ "by_verb_in_clip": [
+  {
+   "verb_in_clip": "insert",
+   "true_mismatch": {
+    "n": 20,
+    "k": 1,
+    "rate": 0.05,
+    "ci95": [
+     0.0089,
+     0.2361
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 7,
+    "rate": 0.35,
+    "ci95": [
+     0.1812,
+     0.5671
+    ]
+   }
+  },
+  {
+   "verb_in_clip": "open",
+   "true_mismatch": {
+    "n": 20,
+    "k": 2,
+    "rate": 0.1,
+    "ci95": [
+     0.0279,
+     0.301
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 2,
+    "rate": 0.1,
+    "ci95": [
+     0.0279,
+     0.301
+    ]
+   }
+  },
+  {
+   "verb_in_clip": "take",
+   "true_mismatch": {
+    "n": 20,
+    "k": 6,
+    "rate": 0.3,
+    "ci95": [
+     0.1455,
+     0.519
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 6,
+    "rate": 0.3,
+    "ci95": [
+     0.1455,
+     0.519
+    ]
+   }
+  },
+  {
+   "verb_in_clip": "close",
+   "true_mismatch": {
+    "n": 20,
+    "k": 8,
+    "rate": 0.4,
+    "ci95": [
+     0.2188,
+     0.6134
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 9,
+    "rate": 0.45,
+    "ci95": [
+     0.2582,
+     0.6579
+    ]
+   }
+  },
+  {
+   "verb_in_clip": "put",
+   "true_mismatch": {
+    "n": 20,
+    "k": 3,
+    "rate": 0.15,
+    "ci95": [
+     0.0524,
+     0.3604
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 8,
+    "rate": 0.4,
+    "ci95": [
+     0.2188,
+     0.6134
+    ]
+   }
+  },
+  {
+   "verb_in_clip": "remove",
+   "true_mismatch": {
+    "n": 20,
+    "k": 6,
+    "rate": 0.3,
+    "ci95": [
+     0.1455,
+     0.519
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 5,
+    "rate": 0.25,
+    "ci95": [
+     0.1119,
+     0.4687
+    ]
+   }
+  },
+  {
+   "verb_in_clip": "turn-off",
+   "true_mismatch": {
+    "n": 20,
+    "k": 7,
+    "rate": 0.35,
+    "ci95": [
+     0.1812,
+     0.5671
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 8,
+    "rate": 0.4,
+    "ci95": [
+     0.2188,
+     0.6134
+    ]
+   }
+  },
+  {
+   "verb_in_clip": "turn-on",
+   "true_mismatch": {
+    "n": 20,
+    "k": 9,
+    "rate": 0.45,
+    "ci95": [
+     0.2582,
+     0.6579
+    ]
+   },
+   "swapped_mismatch": {
+    "n": 20,
+    "k": 7,
+    "rate": 0.35,
+    "ci95": [
+     0.1812,
+     0.5671
+    ]
+   }
+  }
+ ],
+ "true_vs_swapped": {
+  "consistent_with_label": 17,
+  "model_says_label_reversed": 7,
+  "both_match": 101,
+  "both_mismatch": 35,
+  "other": 0,
+  "same_verdict_share": 0.85,
+  "sign_test_p_two_sided": 0.0639
+ },
+ "egodex_same_settings": {
+  "source": "outputs/vlm_check_summary.json (EgoDex test set, 80 episodes; GPT-4 descriptions, not human-checked)",
+  "original_mismatch": {
+   "n": 80,
+   "mismatch": 16,
+   "mismatch_rate": 0.2
+  },
+  "direction_swap_mismatch": {
+   "n": 55,
+   "mismatch": 24,
+   "mismatch_rate": 0.4364
+  },
+  "cross_task_mismatch": {
+   "n": 80,
+   "mismatch": 77,
+   "mismatch_rate": 0.9625
+  },
+  "direction_pairs": {
+   "consistent_with_data": 17,
+   "model_says_data_reversed": 4,
+   "both_match": 27,
+   "both_mismatch": 7,
+   "other": 0
+  }
+ },
+ "notes": [
+  "true mismatch = the model rejected a human label (false alarm, up to EPIC's own label noise). Its reasons are mostly 'the main action is something else': EPIC labels are atomic and overlap with what else the hands do (turning on the tap while washing), so part of this is label granularity.",
+  "same_verdict_share = clips where the label and its exact reverse got the same verdict; the sign test asks whether, on the other clips, the model sided with the label more often than chance.",
+  "swapped mismatch = direction errors caught; other mismatch = unrelated labels caught.",
+  "Labels are short kitchen actions, EgoDex descriptions are long sentences: compare directions of effects, not exact rates."
+ ]
+}

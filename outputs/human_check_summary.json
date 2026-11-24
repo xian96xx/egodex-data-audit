@@ -1,0 +1,202 @@
+{
+  "what": "Blind human spot check of the VLM's verdicts on the original EgoDex descriptions: every original the VLM flagged plus unflagged controls, shuffled, model verdict hidden from the reviewer.",
+  "reviewer": "the author; one person, one pass",
+  "export_file": "language_check_2026-11-23.csv",
+  "export_sha256": "2752c971dc35070ea11c3e9dde46aec5eccd10bf6cc0f35fa6461146432275fe",
+  "design": {
+    "flagged": 16,
+    "controls": 8,
+    "unflagged_pool": 64,
+    "originals_checked_by_vlm": 80,
+    "reversible_in_sample": 17
+  },
+  "verdicts": {
+    "flagged": {
+      "correct": 7,
+      "partial": 2,
+      "wrong": 6,
+      "unclear": 1
+    },
+    "control": {
+      "correct": 1,
+      "partial": 1,
+      "wrong": 6,
+      "unclear": 0
+    }
+  },
+  "wrong_or_partial": {
+    "flagged": {
+      "k": 8,
+      "n": 15,
+      "rate": 0.533,
+      "ci95": [
+        0.301,
+        0.752
+      ]
+    },
+    "control": {
+      "k": 7,
+      "n": 8,
+      "rate": 0.875,
+      "ci95": [
+        0.529,
+        0.978
+      ]
+    }
+  },
+  "wrong_only": {
+    "flagged": {
+      "k": 6,
+      "n": 15,
+      "rate": 0.4,
+      "ci95": [
+        0.198,
+        0.643
+      ]
+    },
+    "control": {
+      "k": 6,
+      "n": 8,
+      "rate": 0.75,
+      "ci95": [
+        0.409,
+        0.929
+      ]
+    }
+  },
+  "direction": {
+    "which_check": {
+      "flagged": {
+        "right": 4,
+        "wrong": 5,
+        "unclear": 1,
+        "blank": 1
+      },
+      "control": {
+        "right": 5,
+        "wrong": 1,
+        "unclear": 0
+      }
+    },
+    "data_pick_judged_wrong": {
+      "all": {
+        "k": 6,
+        "n": 15,
+        "rate": 0.4,
+        "ci95": [
+          0.198,
+          0.643
+        ]
+      },
+      "flagged": {
+        "k": 5,
+        "n": 9,
+        "rate": 0.556,
+        "ci95": [
+          0.267,
+          0.811
+        ]
+      },
+      "control": {
+        "k": 1,
+        "n": 6,
+        "rate": 0.167,
+        "ci95": [
+          0.03,
+          0.564
+        ]
+      }
+    },
+    "data_pick_judged_wrong_by_which_value": {
+      "1": {
+        "k": 1,
+        "n": 8,
+        "rate": 0.125,
+        "ci95": [
+          0.022,
+          0.471
+        ]
+      },
+      "2": {
+        "k": 5,
+        "n": 7,
+        "rate": 0.714,
+        "ci95": [
+          0.359,
+          0.918
+        ]
+      }
+    },
+    "by_model_pair": {
+      "consistent_with_data": {
+        "right": 2,
+        "wrong": 0,
+        "unclear": 0
+      },
+      "model_says_data_reversed": {
+        "right": 2,
+        "wrong": 1,
+        "unclear": 1
+      },
+      "both_match": {
+        "right": 3,
+        "wrong": 1,
+        "unclear": 0
+      },
+      "both_mismatch": {
+        "right": 2,
+        "wrong": 4,
+        "unclear": 0,
+        "blank": 1
+      }
+    },
+    "model_direction_suspects": {
+      "right": 2,
+      "wrong": 1,
+      "unclear": 1
+    }
+  },
+  "human_error_types_in_wrong_or_partial": {
+    "object": 2,
+    "action": 1,
+    "order_direction": 4,
+    "missing_step": 1,
+    "hallucinated": 0,
+    "other": 0,
+    "none_ticked": 7,
+    "none_ticked_but_direction_pick_wrong": 3
+  },
+  "flagged_by_model_error_type": {
+    "action": {
+      "decided": 3,
+      "wrong_or_partial": 2
+    },
+    "color": {
+      "decided": 2,
+      "wrong_or_partial": 1
+    },
+    "extra_step": {
+      "decided": 2,
+      "wrong_or_partial": 1
+    },
+    "object": {
+      "decided": 6,
+      "wrong_or_partial": 3
+    },
+    "other": {
+      "decided": 2,
+      "wrong_or_partial": 1
+    }
+  },
+  "needs_second_look": {
+    "direction_ticked_but_pick_right": 2,
+    "no_reason": 4,
+    "which_blank": 1
+  },
+  "notes": [
+    "Shares count only episodes judged correct, partial or wrong; 'unclear' is left out.",
+    "One reviewer, one pass. With 8 controls the control share is a rough look, not an estimate for all 80.",
+    "The sample is chosen by the model's verdict, so none of these shares is an error rate of EgoDex descriptions.",
+    "data_pick_judged_wrong: the reviewer judged that the data picked the wrong one of the two candidate descriptions of a reversible task (which_llm_description)."
+  ]
+}

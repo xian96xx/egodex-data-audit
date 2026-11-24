@@ -1,15 +1,14 @@
 # EgoDex 数据体检：人类操作数据的质量审计
 
-用 Apple 公开的 **EgoDex 测试集**（7.65 小时第一视角灵巧操作，带 3D 手部追踪和语言描述）回答两个问题：
+用 Apple 公开的 **EgoDex 测试集**（7.65 小时第一视角灵巧操作，带 3D 手部追踪和语言描述）回答三个问题：
 
 1. 手部追踪数据里的问题（遮挡、跳变、冻结、抖动、左右手互换）有多常见？简单规则能不能查出来？
 2. 这些问题会不会真的伤害下游模型？用一个只看关节的小型动作预测模型做对照。
-
-另外准备了语言标注（GPT-4 自动生成的动作描述）的人工复核工具，复核结果出来后再补这一部分。
+3. GPT-4 自动生成的动作描述，能不能交给视觉语言模型（VLM）先筛一遍？先用人为制造的错误，测它查得出哪些、查不出哪些。再到有人工标注的 EPIC-KITCHENS-100 厨房片段上复测，确认它的盲点出在模型本身，而不是 EgoDex 的数据或我们的标注。
 
 > 背景：用人类第一视角数据训练机器人，是扩大数据规模的主要路线之一，但「有效数据」不是自动得来的。追踪会丢、会跳、会抖，自动生成的描述也会写错。这个项目想用最小的实验，量化哪些问题常见、哪些查得出来、哪些真的影响模型。
 
-**English summary.** A small, reproducible audit of the public EgoDex test set (7.65 h of egocentric dexterous manipulation with ARKit hand tracking). Hand tracking is stable (wrist jumps in 0.31% of episodes), but about a quarter of hand-frames fall outside the RGB view. Simple rules catch injected jitter, spikes, freezes and left/right swaps (100%, with 0.3% false alarms on clean windows) but miss slow drift. In a joints-only hand-motion predictor, left/right swaps in 30% of training samples raise test error by 30%, while the other defects cost under 0.7 mm; rule-based filtering recovers the loss. The apparent gain from training on "cleaner" data disappears once motion speed is controlled (quality score vs. speed: Spearman −0.83). All numbers are relative comparisons from a weak joints-only model on a self-made split; no data is redistributed.
+**English summary.** A small, reproducible audit of the public EgoDex test set (7.65 h of egocentric dexterous manipulation with ARKit hand tracking). Hand tracking is stable (wrist jumps in 0.31% of episodes), but about a quarter of hand-frames fall outside the RGB view. Simple rules catch injected jitter, spikes, freezes and left/right swaps (100%, with 0.3% false alarms on clean windows) but miss slow drift. In a joints-only hand-motion predictor, left/right swaps in 30% of training samples raise test error by 30%, while the other defects cost under 0.7 mm; rule-based filtering recovers the loss. The apparent gain from training on "cleaner" data disappears once motion speed is controlled (quality score vs. speed: Spearman −0.83). A local VLM (gemma4 12B, 16 frames per episode) used as a description checker catches 96% of descriptions swapped in from other tasks and 91% of invented extra steps, but only 44% of direction reversals. Re-tested on 160 human-labelled EPIC-KITCHENS-100 clips, it rejects 26% of the correct labels and only 33% of the direction-reversed ones, and gives a label and its exact reverse the same verdict in 85% of clips, so the direction blind spot comes from the model, not from EgoDex's labels. It flags 20% of the original EgoDex descriptions; a one-person blind check of 24 of them is reported as a lead only. The hand-motion numbers are relative comparisons from a weak joints-only model on a self-made split; the EgoDex VLM numbers measure sensitivity to injected errors, not real error rates; no EgoDex or EPIC data is redistributed.
 
 ## 主要发现
 
@@ -18,10 +17,18 @@
 3. **最伤模型的是左右手互换。**30% 的训练样本左右手互换，误差增加 30%；抖动、尖刺、冻结、漂移的影响都不超过 0.7 mm。
 4. **规则过滤能挽回损失。**30% 混合缺陷过滤之后，误差回到干净水平，和精确删除所有坏样本的效果一样。
 5. **「按分数挑干净数据」的收益是假象。**质量分和动作快慢高度相关（相关系数 −0.83）；控制速度以后，干净一半和噪声一半几乎没有差别。
+6. **VLM 初筛适合抓大错，分不清方向。**
+   - 把描述换成别的任务的，或者凭空加一个步骤，能抓住 91%～96%；方向写反只抓住 44%。
+   - 拿有人工标注的 EPIC-KITCHENS-100 片段复测，结论一样：方向反过来的标签只有 33% 被判「不匹配」，比正确标签被误判的 26% 高不了多少；85% 的片段里，它对原标签和反方向标签给出同样的判断。
+   - 所以方向类错误不能交给它，要靠人工抽检。
+7. **原描述错了多少，还不知道。**
+   - 模型对 20% 的 EgoDex 原描述报错。
+   - 作者本人盲审了其中 16 条，外加 8 条没报错的对照：报错组 8/15、对照组 7/8 被判为全错或部分错。可逆任务里，作者判断数据自带的「该用哪条描述」选反了 6/15。
+   - 这只是一个人看一遍得到的线索，不能当标准答案（第 7 节）。
 
 ## 结果
 
-以下数字都来自本仓库脚本在 EgoDex 测试集上的一次完整运行（2026-11-17）。
+第 1～4 节的数字来自本仓库脚本在 EgoDex 测试集上的一次完整运行（2026-11-17），第 5～7 节是 2026-11-23～24 跑的。
 
 ### 1. 数据盘点
 
@@ -152,28 +159,123 @@
 
 结论：在 EgoDex 这种追踪本来就很稳的数据上，按规则分数「挑干净数据」对这个任务没有可见收益。真正有用的是两件事：一是找出并删掉结构性错误（4a、4b），二是保持数据在速度、任务等方面的代表性。
 
-### 5. 语言标注复核（等人工）
+### 5. 语言描述：VLM 自动检查（用人为制造的错误打分）
 
-- 按任务分层抽了 80 段（覆盖 80 个任务，其中 55 段是可逆任务），随机种子固定为 20261117。
-- 复核页 `data/review/review.html` 里，每一段左边是视频，右边是数据实际使用的那条描述，要判断两件事：描述对不对、错在哪；对可逆任务，还要判断「数据选的是哪条」选得对不对。结果自动保存在浏览器里，可以导出 CSV。
-- 这一部分需要人工逐段看视频判断，目前**还没有结果**。复核完成后，再计算错误率和错误类型，并测试 VLM 自动检查员能不能找出这些错误。
+EgoDex 的描述是 GPT-4 生成的，官方没有提供人工核对过的版本，所以这里不靠逐段人工标注，而是**自己造错**：错在哪是我们造的，标准答案天然确定。
+
+- **样本**：按任务分层抽的 80 段（覆盖 80 个任务，其中 55 段是可逆任务，随机种子 20261117），和复核页是同一批。
+- **每段问模型 3～5 次**，每次给一条描述：原描述（假设正确），以及 4 种造出来的错描述：
+  - 方向反了：可逆任务直接用数据里的另一条候选（比如「放进抽屉」换成「从抽屉取出」）；
+  - 换成别的任务的描述；
+  - 改一个细节：第一个数量词，没有就换左右手，再没有就换第一个颜色；
+  - 在结尾加一个没发生的步骤（比如「然后递给另一个人」）。
+- **模型**：`gemma4:12b-it-q4_K_M`（Google，Apache 2.0），本地 Ollama 运行。每段从第一帧到最后一帧均匀取 16 帧（宽 640 像素），按时间顺序给它；temperature 为 0，输出限定为 JSON（判定、错误类型、理由）。共 355 次判断，平均每次 1.8 秒。
+- **提示词和帧数先在调参集上选好再固定**：另取 12 段不在名单里的片段，比较 3 种设置，按「造出来的错平均抓住多少，减去原描述被报错的比例」打分。原版提示词（严格检查每个细节，8 帧）对原描述报错 83%，几乎什么都说不对，得分 0.10；改进版（先描述画面，有明确矛盾才判不对，比较开头和结尾）8 帧得 0.15，16 帧得 0.32，选了后者。整个选择过程没有用到这 80 段。
+
+| 给模型的描述 | 片段数 | 判「不匹配」 | 95% 区间 |
+|---|---|---|---|
+| 原描述（没有人工核对） | 80 | 20%（16） | 13%～30% |
+| 方向反了（另一条候选） | 55 | 44%（24） | 31%～57% |
+| 换成别的任务的描述 | 80 | 96%（77） | 90%～99% |
+| 改了一个数量 | 12 | 50%（6） | 25%～75% |
+| 左右手互换 | 4 | 75%（3） | 30%～95% |
+| 改了一个颜色 | 44 | 70%（31） | 56%～82% |
+| 加了一个没发生的步骤 | 80 | 91%（73） | 83%～96% |
+
+![VLM 检查](outputs/figures/fig9_vlm_check.png)
+
+- **方向是最大的短板。**把 55 段可逆任务的「原描述」和「另一条候选」配对看：17 段（31%）模型的判断和数据一致；27 段（49%）两个方向它都说对，等于分不清；7 段两个都说不对；还有 4 段它认为数据选的那条方向反了，另一条才对。
+- **被报错的 16 条原描述**（包括上面那 4 段），模型给的主要理由是物体不对 6 条、动作不对 3 条、其他 3 条、多写了步骤 2 条、颜色不对 2 条。作者本人对它们做了一轮盲审，见第 7 节。
+- **对数据流程的含义**：如果拿它做「模型初筛 + 人工抽检」里的初筛，换错描述、多写步骤这类大错可以交给它。方向类问题它查不出来，第 6 节在人工标注的数据上确认了这一点。方向仍要人看，或者换别的办法，比如用手部轨迹比较开头和结尾的状态。
+- 汇总在 `outputs/vlm_check_summary.json` 和 `.csv`。逐条判断和模型理由含有描述原文，只留在本地 `data/derived/`。
+- 人工复核页 `data/review/review.html` 仍然可用：每段左边是视频，右边是描述（带中文参考译文），可以判断描述对不对、可逆任务选得对不对，结果能导出 CSV。
+
+### 6. 外部参照：在人工标注的 EPIC-KITCHENS-100 片段上复测
+
+第 5 节有两个缺口：
+- 「方向反了」的标准答案依赖 EgoDex 自带的 `which_llm_description` 字段，这个字段也是自动生成的，没人核对过；
+- 原描述也没有人工真值。
+
+为了不靠作者一个人标注，这一节改用一份现成的人工标注数据当参照：EPIC-KITCHENS-100 验证集。它是第一视角的厨房操作视频，每个动作片段都标了起止时间和叙述。叙述由拍摄者本人口述，再整理成动词和名词类别，里面有很多方向相反的动作。
+
+- **样本**（`src/epic_make_sample.py`，随机种子 7）：
+  - 4 对方向相反的动作：拿 / 放（take / put）、打开 / 关上（open / close）、放进 / 取出（insert / remove）、开 / 关电器（turn-on / turn-off）。
+  - 每个动词 20 段，共 160 段，来自 38 个视频、15 个人；每个视频的每个动词最多取 2 段。
+  - 片段时长 1～5.4 秒，中位 1.8 秒。
+  - 为了避开 EPIC 自己的标签毛病，只保留同时满足下面三条的片段：
+    - 和同一物体的反方向动作不重叠；
+    - 叙述里确实出现了那个名词，而且宾语不是代词（比如 "put it on plate" 解析出的名词其实是放的位置）；
+    - 开 / 关只用于电器。
+- **每段问 3 次**，三次都用同一组 16 帧。三条描述都按 EPIC 的标签写成「动词 + 名词」：
+  - 原标签，比如 "close drawer"，应该判「匹配」；
+  - 动词换成反方向，比如 "open drawer"，应该判「不匹配」；
+  - 换成另一段的标签，动作对、物体、视频都不同，应该判「不匹配」。
+- **模型和设置和第 5 节完全一样**：`gemma4:12b-it-q4_K_M`、同一版提示词、16 帧、宽 640。共 480 次判断，平均每次 1.9 秒。
+- **只取需要的那几秒**：用 ffmpeg 按时间段从 EPIC 官方服务器读取（HTTP 分段请求），一共读了 2.08 GB；整段下载这 38 个视频要约 90 GB。
+
+| 给模型的描述 | EPIC（人工标签） | EgoDex（第 5 节，同样设置） |
+|---|---|---|
+| 原描述 / 原标签，判「不匹配」 | 26%（42/160，20%～34%） | 20%（16/80，原描述没有人工核对） |
+| 方向反了，判「不匹配」 | 33%（52/160，26%～40%） | 44%（24/55） |
+| 换成无关的描述，判「不匹配」 | 82%（131/160，75%～87%） | 96%（77/80） |
+
+（括号里是次数和 95% 区间）
+
+- **方向基本分不清。**
+  - 同一段视频，原标签和方向反过来的标签，85% 的片段（136/160）得到同样的判断：101 段两个都说对，35 段两个都说不对。
+  - 判断不一样的 24 段里，17 段判对、7 段判反。符号检验 p = 0.064，和随机猜的差别不显著。
+  - 4 对动作都差不多：方向反了被判「不匹配」的比例在 28%～38% 之间。
+- **就算判对了，理由也很少是方向。**方向反了被判「不匹配」的 52 次里，模型给的错误类型是「方向」的只有 4 次，其余多是「动作不对」。
+- **对人工标签的误报不低。**原标签有 26% 被判「不匹配」，理由多数是「主要动作是别的」。EPIC 的标签只写一个很短的动作，画面里手上往往同时在做别的事（比如边洗东西边开水龙头），所以这里面有一部分是标签粒度造成的，不全是模型的错。
+- **和 EgoDex 对照着看：**
+  - 在人工标注的数据上，方向同样查不出来。所以第 5 节方向检出率低，主要是模型本身的限制，不是 EgoDex 那个字段或我们造错的方式造成的。这也意味着，不能用这个模型去找 `which_llm_description` 选反了的片段。
+  - EgoDex 上，原描述和另一条候选得到同样判断的比例是 62%（34/55），比 EPIC 的 85% 低。一个可能的原因是：EgoDex 的另一条候选是单独生成的整句话，除了方向，用词和细节也不一样，模型可能是靠这些区别判断的，不一定是看懂了方向。
+- 汇总在 `outputs/epic_vlm_summary.json`。逐条判断在 `outputs/epic_vlm_verdicts.csv`，只有 EPIC 的片段编号、动词、描述类型、模型的判断和错误类型。片段本身和含叙述原文的明细只留在本地。
+
+### 7. 作者单人盲审抽查（只当线索）
+
+模型对 80 条 EgoDex 原描述里的 16 条报错。作者本人把这 16 条和随机抽的 8 条没报错的对照混在一起，打乱顺序，在看不到模型判断的情况下逐段看视频，判断描述对不对；可逆任务还要判断数据自带的「该用哪条描述」选得对不对。盲审页由 `src/make_check_page.py` 生成，评分用 `src/score_check_page.py`。
+
+| | 判「对」 | 部分错 | 错 | 看不清 | 全错或部分错 |
+|---|---|---|---|---|---|
+| 模型报错的 16 条 | 7 | 2 | 6 | 1 | 8/15（53%，30%～75%） |
+| 没报错的 8 条对照 | 1 | 1 | 6 | 0 | 7/8（88%，53%～98%） |
+
+- **可逆任务：**作者判断数据「选反了」的有 6/15。差别集中在数据选第 2 条描述的片段（7 段里有 5 段），选第 1 条的 8 段里只有 1 段。样本很小，但如果这个规律成立，值得回头查这个字段在 EgoDex 里是怎么生成的。
+- **模型报错、作者也认为有问题的 8 条里，5 条是「选反了」**，但模型给的错误类型都不是「方向」，而是颜色、物体、动作等。
+- **为什么只当线索：**
+  - 只有一个人、看了一遍、共 24 段。
+  - 对照组那 7 条里，有 5 条要么没勾理由，要么前后矛盾（比如勾了「方向错」，却又判数据选得对），还要再看一遍。
+  - 样本是按模型的判断挑的，这些比例不是 EgoDex 描述的错误率。
+  - 要当标准答案，至少要写清判定规则，找第二个人独立标同样的片段，再算两人的一致率（比如 Cohen's kappa）。
+- 如果这个线索成立，它和第 6 节的结论对得上：模型说「对」，不等于真的对，尤其是方向。
+- 汇总在 `outputs/human_check_summary.json`。逐段判断在 `outputs/human_check_judgments.csv`，只有片段编号和作者的判断。
 
 ## 数据和许可
 
 - 数据：EgoDex（Hoque et al., 2025, Apple, [arXiv:2505.11709](https://arxiv.org/abs/2505.11709)），官方仓库 [apple-aiml-research/ml-egodex](https://github.com/apple-aiml-research/ml-egodex)。
 - 数据许可：**CC BY-NC-ND**。本仓库**不包含任何数据**，也不发布加工后的数据（筛选子集、修正轨迹、缓存、叠加了骨架的画面都不发布）。这里只有代码、汇总统计和图表，别人需要自己从官方地址下载数据后复现。
 - 只用了测试集（`test.zip`，17,304,529,397 字节，约 16 GB）。
+- 外部参照数据：EPIC-KITCHENS-100（Damen et al., IJCV 2022，[epic-kitchens.github.io](https://epic-kitchens.github.io)），标注和视频都是 **CC BY-NC 4.0**。
+  - 只用了验证集的标注表，以及 160 个片段：每段只截取那一两秒，从官方服务器读取。
+  - 本仓库不包含 EPIC 的视频、画面和叙述原文。`outputs/epic_vlm_verdicts.csv` 里只有 EPIC 的片段编号、视频编号、动词类别名和模型的判断。
 
 ## 怎么运行
 
-环境：Python 3.10 以上，`pip install -r requirements.txt`（numpy、h5py、pandas、scipy、matplotlib、torch，复核页另外要 opencv-python）。只用 CPU，不需要 GPU。
+环境：Python 3.10 以上，`pip install -r requirements.txt`（numpy、h5py、pandas、scipy、matplotlib、torch，复核页和 VLM 检查另外要 opencv-python）。实验 1～4 只用 CPU。实验 5 的 VLM 检查要一个能看图的 Ollama 模型，作者在一块 16 GB 显存的显卡上跑 `gemma4:12b-it-q4_K_M`，用 `--api` 指定 Ollama 地址。第 6 节的 EPIC 参照还要联网，并且要有 ffmpeg 来截取片段；ffmpeg 不在 PATH 上时，用环境变量 `FFMPEG` 指定。
 
 ```bash
 # 1. 下载测试集（16 GB，可断点续传）
 curl -L -C - -o data/raw/test.zip "https://ml-site.cdn-apple.com/datasets/egodex/test.zip"
 
-# 2. 一键跑完全部步骤（Windows）
+# 2. 一键跑完第 0～5 步和语言复核页（Windows）
 run_all.cmd
+
+# 3. 只有第 6 节要用：EPIC-KITCHENS-100 的 3 个标注表，共约 1.2 MB
+mkdir -p data/external/epic100/annotations
+for f in EPIC_100_validation.csv EPIC_100_verb_classes.csv EPIC_100_noun_classes.csv; do
+  curl -L -o data/external/epic100/annotations/$f "https://raw.githubusercontent.com/epic-kitchens/epic-kitchens-100-annotations/master/$f"
+done
 ```
 
 也可以分步运行（在仓库根目录执行，`-I` 让 Python 不从当前目录导入模块）：
@@ -188,6 +290,16 @@ run_all.cmd
 | 4 动作预测对照（5 组实验，共 69 次训练，CPU 约 25 分钟；中断后重跑会接着跑） | `python -I -u src/train_predictor.py` | `outputs/predictor_runs.csv`、`predictor_summary.csv`、`predictor_meta.json` |
 | 5 出图 | `python -I src/make_figures.py` | `outputs/figures/fig1`～`fig8` |
 | 语言复核页 | `python -I src/prepare_language_audit.py` | `data/review/review.html`（本地用，含数据内容，不发布） |
+| 6 VLM 检查（调参集：加 `--dev 12 --prompt strict/calibrated --frames 8/16 --results data/derived/vlm_dev_<设置>.jsonl`） | `python -I src/vlm_check.py` | `outputs/vlm_check_summary.json`、`.csv`、`outputs/figures/fig9_vlm_check.png` |
+| 7 盲审抽查页（模型报错的原描述 + 8 条没报错的对照，打乱顺序，不显示模型判断） | `python -I src/make_check_page.py` | `data/review/review_check.html`（本地用）；答案表 `data/derived/check_page_key.csv` |
+| 8 盲审评分（参数是盲审页导出的 CSV） | `python -I src/score_check_page.py <导出的 CSV>` | `outputs/human_check_summary.json`、`outputs/human_check_judgments.csv` |
+| 9a EPIC：统计方向相反的动作片段 | `python -I src/epic_direction_candidates.py` | `data/derived/epic_direction_segments.csv`、`epic_video_candidates.csv` |
+| 9b EPIC：查候选视频的大小（只发 HEAD 请求，不下载） | `python -I src/epic_video_sizes.py` | `data/derived/epic_video_sizes.csv` |
+| 9c EPIC：抽 160 段，每段写 3 条描述 | `python -I src/epic_make_sample.py` | `data/derived/epic_sample.csv` |
+| 9d EPIC：按时间段截取片段（约 2.1 GB 网络流量，8 路并发约 35 分钟；中断后重跑会跳过已截好的） | `python -I src/epic_fetch_clips.py` | `data/external/epic100/clips/`（本地用，不发布） |
+| 9e EPIC：VLM 检查（中断后重跑会接着跑） | `python -I src/epic_vlm_check.py` | `outputs/epic_vlm_summary.json`、`outputs/epic_vlm_verdicts.csv` |
+
+`run_all.cmd` 只跑上表的 0～5 步和语言复核页。第 6～9 步要单独运行：VLM 检查要 Ollama，盲审评分要人工导出的 CSV，EPIC 参照要联网截取片段。
 
 EgoDex 的 MP4 是 MPEG-4 Part 2 编码，浏览器不能直接播放。复核页脚本会把抽到的 80 段转成 640×360、15 帧每秒的 WebM（VP8）副本，放在 `data/review/videos/`，原视频不动。
 
@@ -218,12 +330,20 @@ EgoDex 的 MP4 是 MPEG-4 Part 2 编码，浏览器不能直接播放。复核�
 - 「质量分」是这个项目自己定义的（几条规则的排名平均），「更干净」只表示在这些规则下更干净；而且它和动作快慢强相关，见 4d。
 - 动作预测模型只看关节、不看画面，只比「手不动」基线好 6%，结论只适合做相对比较。换成看画面的模型以后，各类缺陷的伤害大小可能不同。
 - 没有人工真值来核对追踪本身准不准。官方 README 也提醒，2D 重投影和画面里的手可能对不齐，原因是视频由多个摄像头合成时带来的视角偏差。
+- VLM 检查里，造出来的错检出率只说明模型对「人为制造的错误」有多敏感，**不是** GPT-4 描述的真实错误率。原描述被假设为正确，只有作者一个人盲审看过其中 24 段（第 7 节）；「方向反了」的标准答案依赖数据自带的 `which_llm_description` 字段，这个字段也没有系统核对过。
+- VLM 检查只试了一个模型、两版提示词；调参集只有 12 段，选出来的设置不一定最优。数量、左右手这两类改动的样本很少（12 段和 4 段），区间很宽。
+- EPIC 参照有这些限制：
+  - 只用了厨房场景、4 对动作、160 段。
+  - 标签是很短的「动词 + 名词」，和 EgoDex 的整句描述不一样，所以它支持的是「模型分不清方向」这类定性结论，具体比例不能直接套到 EgoDex 上。
+  - EPIC 的人工标签也有少量错误，动作片段又常和别的动作重叠，这会让原标签的误报偏高。
+  - 样本只从方向动作最密集的 40 个视频里抽，不是所有视频的随机样本。
+- 第 7 节的盲审只有作者一个人看了一遍，没有第二个人独立标注，也没有算一致率。
 
 ## 许可
 
 - 本仓库的代码使用 MIT 许可证，见 `LICENSE`。
 - 本仓库不包含 EgoDex 数据。数据由 Apple 以 CC BY-NC-ND 许可发布，请从官方地址下载，并遵守它的非商业、禁止演绎条款。
-- `outputs/` 里的统计结果和图表是根据 EgoDex 计算出来的，仅供非商业研究参考。
+- `outputs/` 里的统计结果和图表是根据 EgoDex 计算出来的，仅供非商业研究参考。`epic_` 开头的结果根据 EPIC-KITCHENS-100（CC BY-NC 4.0）计算，同样仅供非商业研究参考。
 
 ## 致谢和说明
 
@@ -241,4 +361,22 @@ EgoDex 的 MP4 是 MPEG-4 Part 2 编码，浏览器不能直接播放。复核�
 }
 ```
 
-- 分工：研究方向（人类操作数据的质量）和实验要求由作者提出。实验设计、代码编写和运行主要由 AI 编程助手 Claude Code 完成。作者负责检查结果、提出修改意见，以及语言标注的人工复核（进行中）。
+- 第 6 节的外部参照用了 EPIC-KITCHENS-100 的标注和视频片段：
+
+```bibtex
+@article{Damen2022RESCALING,
+      title={Rescaling Egocentric Vision: Collection, Pipeline and Challenges for EPIC-KITCHENS-100},
+      author={Damen, Dima and Doughty, Hazel and Farinella, Giovanni Maria and Furnari, Antonino and Ma, Jian and Kazakos, Evangelos and Moltisanti, Davide and Munro, Jonathan and Perrett, Toby and Price, Will and Wray, Michael},
+      journal={International Journal of Computer Vision (IJCV)},
+      year={2022},
+      volume={130},
+      pages={33--55},
+      url={https://doi.org/10.1007/s11263-021-01531-2},
+}
+```
+
+- 分工：
+  - 研究方向（人类操作数据的质量）和实验要求由作者提出。
+  - 语言描述部分，作者先决定不逐段人工标注，改用人为制造的错误来评测 VLM。看到自己单人盲审的结果后，作者认为不能只靠一个人标，提出改用现成的人工标注数据；数据集的调研和选型（EPIC-KITCHENS-100）由 AI 助手完成，作者确认。
+  - 第 7 节的人工判断全部由作者本人完成。
+  - 实验设计、代码编写和运行主要由 AI 编程助手 Claude Code 完成。作者负责检查结果、提出修改意见。

@@ -4,6 +4,11 @@ Writes a local review page (data/review/review.html) that plays each video next 
 description and exports the reviewer's verdicts as CSV. Everything here contains dataset
 content, so it stays under data/ and is never published. Human verdicts must come from a
 real reviewer; nothing in this script fills them in.
+
+Optional: if data/review/desc_zh.json exists (a local, unpublished Chinese reference
+translation keyed by episode id), it is shown under each English description. A translation
+is used only when its stored English text matches the description exactly. Verdicts still
+refer to the English text; the export CSV is unchanged.
 """
 from __future__ import annotations
 
@@ -44,6 +49,7 @@ video { width:100%; border-radius:6px; background:#000; }
 .meta { color:var(--muted); font-size:12px; }
 .desc { font-size:15px; padding:8px 10px; border-left:3px solid var(--accent); background:color-mix(in srgb, var(--accent) 8%, transparent); margin:6px 0; }
 .alt { font-size:13px; color:var(--muted); }
+.zh { font-size:14px; color:var(--muted); margin:-2px 0 8px; padding:0 10px 0 13px; }
 fieldset { border:1px solid var(--line); border-radius:6px; margin:8px 0; padding:6px 10px; }
 legend { font-size:13px; color:var(--muted); }
 fieldset label { margin-right:12px; white-space:nowrap; display:inline-block; }
@@ -55,6 +61,7 @@ input[type=text] { width:100%; padding:6px; border:1px solid var(--line); border
 <button class="primary" id="export">导出 CSV</button></header>
 <main>
 <p class="help">每段先看视频，再判断蓝框里的描述（数据实际使用的那条）对不对。可逆任务还要判断「数据选的是哪条」选得对不对。结果自动存在这个浏览器里，做完点「导出 CSV」。看不清就选「看不清」，不要猜。</p>
+<p class="help hidden" id="zhnote">蓝框下面的灰字是 Claude 写的中文参考译文，只帮你看懂，判定以英文原文为准。英文本身拼写或用词奇怪的地方，译文里标了「原文如此」。</p>
 <div id="list"></div></main>
 <script id="items" type="application/json">__ITEMS__</script>
 <script>
@@ -72,12 +79,12 @@ function card(it, i) {
   const radios = (name, opts, cur) => opts.map(([v, t]) => `<label><input type="radio" name="${name}-${i}" value="${v}" ${cur === v ? 'checked' : ''}> ${t}</label>`).join('');
   const errs = ERRS.map(([v, t]) => `<label><input type="checkbox" value="${v}" ${(st.errors || []).includes(v) ? 'checked' : ''}> ${t}</label>`).join('');
   const which = it.reversible ? `<fieldset data-k="which"><legend>可逆任务：数据选的是第 ${esc(it.which)} 条，选对了吗？</legend>${radios('which', WHICH, st.which)}</fieldset>
-     <div class="alt">另一条候选：${esc(it.desc_alt)}</div>` : '';
+     <div class="alt">另一条候选：${esc(it.desc_alt)}${it.desc_alt_zh ? `<br>${esc(it.desc_alt_zh)}` : ''}</div>` : '';
   return `<div class="card ${st.verdict ? 'done' : ''}" data-id="${esc(it.id)}">
     <div><video controls preload="metadata" src="${esc(it.video)}"></video>
       <div class="meta">#${i + 1} · ${esc(it.id)} · ${esc(it.seconds)} 秒</div></div>
-    <div><div class="meta">任务：${esc(it.task)}</div>
-      <div class="desc">${esc(it.desc)}</div>${which}
+    <div><div class="meta">任务：${esc(it.task)}${it.task_zh ? `（${esc(it.task_zh)}）` : ''}</div>
+      <div class="desc">${esc(it.desc)}</div>${it.desc_zh ? `<div class="zh">${esc(it.desc_zh)}</div>` : ''}${which}
       <fieldset data-k="verdict"><legend>描述对吗？</legend>${radios('verdict', VERDICTS, st.verdict)}</fieldset>
       <fieldset data-k="errors"><legend>错在哪（可多选）</legend>${errs}</fieldset>
       <input type="text" data-k="note" placeholder="备注（可选）" value="${esc(st.note)}"></div></div>`;
@@ -112,6 +119,7 @@ document.getElementById('export').addEventListener('click', () => {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
   a.download = 'language_review_' + new Date().toISOString().slice(0, 10) + '.csv'; a.click();
 });
+if (ITEMS.some(it => it.desc_zh)) document.getElementById('zhnote').classList.remove('hidden');
 render();
 </script></body></html>
 """
@@ -206,6 +214,22 @@ def main() -> int:
             "video": video, "reversible": reversible, "which": which if reversible else None,
             "desc": d2 if use2 else d1, "desc_alt": (d1 if use2 else d2) if reversible else "",
         })
+    zh_path = review / "desc_zh.json"
+    if zh_path.exists():
+        zh = json.loads(zh_path.read_text(encoding="utf-8")).get("items", {})
+        applied, skipped = 0, []
+        for it in items:
+            z = zh.get(it["id"])
+            if not z:
+                continue
+            # Use a translation only if it was made for exactly this English text.
+            if z.get("desc_en") != it["desc"] or z.get("alt_en", "") != (it["desc_alt"] or ""):
+                skipped.append(it["id"])
+                continue
+            it["task_zh"], it["desc_zh"], it["desc_alt_zh"] = z.get("task_zh", ""), z.get("desc_zh", ""), z.get("alt_zh", "")
+            applied += 1
+        print(f"Chinese reference text: {applied}/{len(items)} applied; {len(skipped)} skipped "
+              f"because the English changed {skipped[:5]}")
     page = PAGE.replace("__ITEMS__", json.dumps(items, ensure_ascii=False).replace("</", "<\\/"))
     (review / "review.html").write_text(page, encoding="utf-8")
     pd.DataFrame(items).to_csv(review / "review_items.csv", index=False, encoding="utf-8-sig")

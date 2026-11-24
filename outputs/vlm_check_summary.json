@@ -1,0 +1,130 @@
+{
+ "meta": {
+  "model": "gemma4:12b-it-q4_K_M",
+  "prompt": "calibrated-ce5ad3a7",
+  "frames_per_episode": 16,
+  "seed": 20261123,
+  "episodes": 80,
+  "judgments": 355,
+  "selection_score": 0.511,
+  "direction_pairs": {
+   "consistent_with_data": 17,
+   "model_says_data_reversed": 4,
+   "both_match": 27,
+   "both_mismatch": 7,
+   "other": 0
+  },
+  "dev_selection": [
+   {
+    "config": "calibrated_16",
+    "episodes": 12,
+    "judgments": 50,
+    "selection_score": 0.3214,
+    "original_flag_rate": 0.4167
+   },
+   {
+    "config": "calibrated_8",
+    "episodes": 12,
+    "judgments": 50,
+    "selection_score": 0.1518,
+    "original_flag_rate": 0.5
+   },
+   {
+    "config": "strict_8",
+    "episodes": 12,
+    "judgments": 50,
+    "selection_score": 0.0952,
+    "original_flag_rate": 0.8333
+   }
+  ],
+  "mean_seconds_per_judgment": 1.79,
+  "total_minutes": 10.6,
+  "note": "合成错误的检出率只说明模型对人为制造的错误有多敏感，不是 GPT-4 描述的真实错误率；原描述没有经过人工核对，被模型报错的原描述可能是误报，也可能是真错；方向错依赖数据自带的 which_llm_description 字段，这个字段同样没有人工核对。"
+ },
+ "rows": [
+  {
+   "group": "original",
+   "n": 80,
+   "mismatch": 16,
+   "match": 64,
+   "unsure_or_unparsed": 0,
+   "mismatch_rate": 0.2,
+   "ci95_low": 0.127,
+   "ci95_high": 0.3005,
+   "mismatch_with_expected_type": null,
+   "original_match_and_this_mismatch": null
+  },
+  {
+   "group": "direction_swap",
+   "n": 55,
+   "mismatch": 24,
+   "match": 31,
+   "unsure_or_unparsed": 0,
+   "mismatch_rate": 0.4364,
+   "ci95_low": 0.3137,
+   "ci95_high": 0.5673,
+   "mismatch_with_expected_type": 10,
+   "original_match_and_this_mismatch": 17
+  },
+  {
+   "group": "cross_task",
+   "n": 80,
+   "mismatch": 77,
+   "match": 3,
+   "unsure_or_unparsed": 0,
+   "mismatch_rate": 0.9625,
+   "ci95_low": 0.8955,
+   "ci95_high": 0.9872,
+   "mismatch_with_expected_type": 74,
+   "original_match_and_this_mismatch": 62
+  },
+  {
+   "group": "detail_edit:count",
+   "n": 12,
+   "mismatch": 6,
+   "match": 6,
+   "unsure_or_unparsed": 0,
+   "mismatch_rate": 0.5,
+   "ci95_low": 0.2538,
+   "ci95_high": 0.7462,
+   "mismatch_with_expected_type": 1,
+   "original_match_and_this_mismatch": 4
+  },
+  {
+   "group": "detail_edit:hand",
+   "n": 4,
+   "mismatch": 3,
+   "match": 1,
+   "unsure_or_unparsed": 0,
+   "mismatch_rate": 0.75,
+   "ci95_low": 0.3006,
+   "ci95_high": 0.9544,
+   "mismatch_with_expected_type": 3,
+   "original_match_and_this_mismatch": 2
+  },
+  {
+   "group": "detail_edit:color",
+   "n": 44,
+   "mismatch": 31,
+   "match": 13,
+   "unsure_or_unparsed": 0,
+   "mismatch_rate": 0.7045,
+   "ci95_low": 0.5578,
+   "ci95_high": 0.8184,
+   "mismatch_with_expected_type": 18,
+   "original_match_and_this_mismatch": 23
+  },
+  {
+   "group": "extra_step",
+   "n": 80,
+   "mismatch": 73,
+   "match": 7,
+   "unsure_or_unparsed": 0,
+   "mismatch_rate": 0.9125,
+   "ci95_low": 0.8302,
+   "ci95_high": 0.957,
+   "mismatch_with_expected_type": 60,
+   "original_match_and_this_mismatch": 57
+  }
+ ]
+}
